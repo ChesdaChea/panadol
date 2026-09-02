@@ -17,11 +17,11 @@
     .container {
       max-width: 800px;
       margin: 0 auto;
-      padding: 20px;
+      /* padding: 20px; */
       background-color: #ffffff;
       box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
       position: relative;
-      z-index: 2;
+      z-index: 1;
     }
 
     header {
@@ -71,7 +71,7 @@
 
     /* --- SCROLL REVEAL UNDERLAY WINDOW --- */
     .underlay-slot {
-      height: 750px;
+      height: 1000px;
       margin: 30px 0;
       position: relative;
       clip-path: inset(0 0 0 0);
@@ -87,9 +87,11 @@
       justify-content: center;
       align-items: center;
       pointer-events: none;
+      z-index: 3;
     }
 
-    /* Base Layer Image */
+    /* Base Layer (Right-side Image: photo_2026-09-01_14-12-16.jpg) */
+    /* Base Layer (Right-side Image: photo_2026-09-01_14-12-16.jpg) */
     .underlay-banner {
       width: 100%;
       height: 100%;
@@ -102,7 +104,7 @@
       overflow: hidden;
     }
 
-    /* Reveal Layer Image */
+    /* Top Layer (Left-side Image: photo.jpg) */
     .underlay-banner-reveal {
       position: absolute;
       top: 0;
@@ -113,31 +115,31 @@
       background-size: cover;
       background-repeat: no-repeat;
       background-position: top;
-      clip-path: inset(0 100% 0 0);
+      clip-path: inset(100% 0 0 0);
       z-index: 1;
       transition: clip-path 0.05s linear;
     }
 
-    /* Vertical Column Line */
+    /* Horizontal Line (Top-Bottom Slider) */
     .underlay-banner::before {
       content: "";
       position: absolute;
-      top: 0;
-      bottom: 0;
-      left: 50%;
-      width: 0.2rem;
+      left: 0;
+      right: 0;
+      top: 50%;
+      height: 0.2rem;
       background: rgba(255, 255, 255, 0.3);
       backdrop-filter: blur(10px);
       box-shadow: 0 0 8px rgba(255, 255, 255, 0.5), inset 0 0 4px rgba(255, 255, 255, 0.4);
       border: 1px solid rgba(255, 255, 255, 0.4);
-      transform: translateX(-50%);
+      transform: translateY(-50%);
       z-index: 2;
-      transition: left 0.05s linear;
+      transition: top 0.05s linear;
     }
 
-    /* Circular Right/Left Arrow Handle */
+    /* Circular Up/Down Arrow Handle */
     .underlay-banner::after {
-      content: "›";
+      content: "▼";
       position: absolute;
       top: 50%;
       left: 50%;
@@ -149,18 +151,30 @@
       color: rgba(255, 255, 255, 0.9);
       font-size: 28px;
       font-weight: bold;
-      line-height: 40px;
+      line-height: 36px;
       text-align: center;
       border-radius: 50%;
       border: 2px solid rgba(255, 255, 255, 0.4);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), inset 0 1px 2px rgba(255, 255, 255, 0.5);
       z-index: 3;
-      transition: left 0.05s linear;
+      transition: top 0.05s linear;
       cursor: grab;
     }
 
     .underlay-banner::after:active {
       cursor: grabbing;
+    }
+
+    .ad-label {
+      position: absolute;
+      top: 5px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.5);
+      color: #fff;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 3px;
+      z-index: 5;
     }
 
     footer {
@@ -231,79 +245,85 @@
   </div>
 
   <script>
-    // Manual drag/swipe control for underlay banner
+    // Manual drag/swipe control for underlay banner (VERTICAL)
     const underlayBanner = document.querySelector('.underlay-banner');
     const revealLayer = document.querySelector('.underlay-banner-reveal');
     let isDragging = false;
-    let startX = 0;
-    let currentPosition = 50; // Start at center (50%)
+    let startY = 0;
+    let currentPosition = 50; // Start at middle
 
     // Mouse events
     underlayBanner.addEventListener('mousedown', (e) => {
       isDragging = true;
-      startX = e.clientX;
+      startY = e.clientY;
+      // Remove transition while dragging for smooth response
+      underlayBanner.style.transition = 'none';
     });
 
     document.addEventListener('mousemove', (e) => {
       if (!isDragging) return;
       
       const rect = underlayBanner.getBoundingClientRect();
-      const deltaX = e.clientX - startX;
-      const bannerWidth = rect.width;
+      const deltaY = e.clientY - startY;
+      const bannerHeight = rect.height;
       
-      // Calculate position as percentage, starting from center (50%)
-      currentPosition = Math.max(0, Math.min(100, 50 + (deltaX / bannerWidth) * 100));
+      // Calculate position: swipe up = line goes up, swipe down = line goes down
+      currentPosition = Math.max(0, Math.min(100, 50 + (deltaY / bannerHeight) * 100));
       
-      // Update pseudo-elements position
+      // Update pseudo-elements position with CSS variable
       underlayBanner.style.setProperty('--slider-position', currentPosition + '%');
       
-      // Update reveal layer
-      const revealPercent = Math.max(0, Math.min(100, currentPosition));
-      revealLayer.style.clipPath = `inset(0 ${100 - revealPercent}% 0 0)`;
+      // Update reveal layer (inverted: swipe down shows first image, swipe up shows second image)
+      revealLayer.style.clipPath = `inset(${currentPosition}% 0 0 0)`;
     });
 
     document.addEventListener('mouseup', () => {
       isDragging = false;
+      // Restore transition after dragging
+      underlayBanner.style.transition = '';
     });
 
     // Touch events for mobile
     underlayBanner.addEventListener('touchstart', (e) => {
       isDragging = true;
-      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      // Remove transition while dragging for smooth response
+      underlayBanner.style.transition = 'none';
     });
 
     document.addEventListener('touchmove', (e) => {
       if (!isDragging) return;
       
       const rect = underlayBanner.getBoundingClientRect();
-      const deltaX = e.touches[0].clientX - startX;
-      const bannerWidth = rect.width;
+      const deltaY = e.touches[0].clientY - startY;
+      const bannerHeight = rect.height;
       
-      // Calculate position as percentage, starting from center (50%)
-      currentPosition = Math.max(0, Math.min(100, 50 + (deltaX / bannerWidth) * 100));
+      // Calculate position: swipe up = line goes up, swipe down = line goes down
+      currentPosition = Math.max(0, Math.min(100, 50 + (deltaY / bannerHeight) * 100));
       
-      // Update pseudo-elements position
+      // Update pseudo-elements position with CSS variable
       underlayBanner.style.setProperty('--slider-position', currentPosition + '%');
       
-      // Update reveal layer
-      const revealPercent = Math.max(0, Math.min(100, currentPosition));
-      revealLayer.style.clipPath = `inset(0 ${100 - revealPercent}% 0 0)`;
+      // Update reveal layer (inverted: swipe down shows first image, swipe up shows second image)
+      revealLayer.style.clipPath = `inset(${currentPosition}% 0 0 0)`;
     });
 
     document.addEventListener('touchend', () => {
       isDragging = false;
+      // Restore transition after dragging
+      underlayBanner.style.transition = '';
     });
 
     // Update pseudo-element positions using CSS variables
-    underlayBanner.style.setProperty('--slider-position', '50%'); // Start at center
-    revealLayer.style.clipPath = 'inset(0 50% 0 0)'; // Show 50% of reveal layer initially
+    underlayBanner.style.setProperty('--slider-position', '50%'); // Start in middle
+    revealLayer.style.clipPath = 'inset(50% 0 0 0)'; // Show 50% of reveal layer initially
     
-    // Create a style rule for dynamic positioning
+    // Create a style rule for dynamic positioning of pseudo-elements
     const style = document.createElement('style');
     style.textContent = `
       .underlay-banner::before,
       .underlay-banner::after {
-        left: var(--slider-position, 50%) !important;
+        top: var(--slider-position, 50%) !important;
       }
     `;
     document.head.appendChild(style);
